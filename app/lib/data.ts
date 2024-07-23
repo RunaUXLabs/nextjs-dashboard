@@ -1,4 +1,5 @@
 import { sql } from '@vercel/postgres';
+// 데이터베이스를 쿼리할 수 있음
 import {
   CustomerField,
   CustomersTableType,
@@ -9,19 +10,31 @@ import {
 } from './definitions';
 import { formatCurrency } from './utils';
 
+/**
+ * 데이터가 병렬요청에서 유동 하나만 느리다면? 정적/동적 나누어 요청하는 방법이 있다.
+ * 동적 렌더링을 사용시 애플리케이션의 속도는 가장 느린 데이터 가져오기 속도에 따라 결정됨.
+ * 
+ * 정적렌더링:
+ * 데이터 페치 및 렌더링은 빌드 시점(배포 시) 또는 데이터 재검증 시 서버에서 발생. 사용자 방문시 캐시된 결과가 제공.
+ * 빠르고, 서버부하 낮고, SEO 높음. 박아넣은 고정값 띄우는 개념이라서.
+ * 
+ * 동적렌더링:
+ * 정적의 반대, 정기적으로 업데이트 되는 데이터, 사용자별 콘텐츠, 요청시간 정보등이 표현될 때 사용
+ */
 export async function fetchRevenue() {
   try {
-    // Artificially delay a response for demo purposes.
-    // Don't do this in production :)
-
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
-
+    // 데이터 요청이 느린 케이스 시뮬레이션 하기 ----시작
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const data = await sql<Revenue>`SELECT * FROM revenue`;
+    console.log('Data fetch completed after 3 seconds.');
+    // 데이터 요청이 느린 케이스 시뮬레이션 하기 ----끝
 
-    // console.log('Data fetch completed after 3 seconds.');
+    // 데이터 요청 기본값
+    // const data = await sql<Revenue>`SELECT * FROM revenue`;
 
     return data.rows;
+
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch revenue data.');
@@ -29,6 +42,7 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  // 메모리에서 최신 송장을 정렬하는 대신 SQL 쿼리를 사용하여 마지막 5개 송장만 가져오기
   try {
     const data = await sql<LatestInvoiceRaw>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
@@ -48,11 +62,10 @@ export async function fetchLatestInvoices() {
   }
 }
 
+// 데이터 요청하기
 export async function fetchCardData() {
   try {
-    // You can probably combine these into a single SQL query
-    // However, we are intentionally splitting them to demonstrate
-    // how to initialize multiple queries in parallel with JS.
+    // 하나의 SQL 쿼리로 결합할 수 있으나, 의도적으로 분할후 초기화하여 사용한다
     const invoiceCountPromise = sql`SELECT COUNT(*) FROM invoices`;
     const customerCountPromise = sql`SELECT COUNT(*) FROM customers`;
     const invoiceStatusPromise = sql`SELECT
@@ -60,6 +73,8 @@ export async function fetchCardData() {
          SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
          FROM invoices`;
 
+    // waterfall현상(직렬식)를 피해 병렬식으로 하는방법, 이는 동시 실행시 성능이 향상된다.
+    // Promise.all() 또는 Promise.allSettled()를 사용하는데, 어느 프레임워크에서 사용가능한 바닐라 패턴을 사용할 것 
     const data = await Promise.all([
       invoiceCountPromise,
       customerCountPromise,
@@ -72,6 +87,7 @@ export async function fetchCardData() {
     const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0');
 
     return {
+      // 해당 함수의 반환값을 구조분해 할당하여 사용한다.
       numberOfCustomers,
       numberOfInvoices,
       totalPaidInvoices,
