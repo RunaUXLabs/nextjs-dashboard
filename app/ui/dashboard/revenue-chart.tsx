@@ -1,19 +1,16 @@
 import { generateYAxis } from '@/app/lib/utils';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
-import { Revenue } from '@/app/lib/definitions';
 
-// This component is representational only.
-// For data visualization UI, check out:
-// https://www.tremor.so/
-// https://www.chartjs.org/
-// https://airbnb.io/visx/
+// import { Revenue } from '@/app/lib/definitions';
+import { fetchRevenue } from '@/app/lib/data';
+// 챕터9, 7의 <RevenueChart> 변경하기
 
-export default async function RevenueChart({
-  revenue,
-}: {
-  revenue: Revenue[];
-}) {
+// export default async function RevenueChart({ revenue, }: { revenue: Revenue[]; }) {
+// 챕터9, <RevenueChart>구성 요소를 업데이트하여 자체 데이터를 가져오고 전달된 prop을 제거할 수 있다.
+export default async function RevenueChart() {
+  const revenue = await fetchRevenue();
+
   const chartHeight = 350;
   // 7챕터 대시보드 차트데이터 확인하려면 주석 해제
 

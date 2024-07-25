@@ -2,9 +2,16 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { lusitana } from '@/app/ui/fonts';
-import { LatestInvoice } from '@/app/lib/definitions';
 
-export default async function LatestInvoices({ latestInvoices, }: { latestInvoices: LatestInvoice[]; }) {
+// import { LatestInvoice } from '@/app/lib/definitions';
+import { fetchLatestInvoices } from '@/app/lib/data';
+// 챕터9, 7의 <RevenueChart> 변경하기
+
+// export default async function LatestInvoices({ latestInvoices, }: { latestInvoices: LatestInvoice[]; }) {
+// 챕터9, <RevenueChart>구성 요소를 업데이트하여 자체 데이터를 가져오고 전달된 prop을 제거할 수 있다.
+export default async function LatestInvoices() {
+  const latestInvoices = await fetchLatestInvoices();
+
   return (
     <div className="flex w-full flex-col md:col-span-4">
       <h2 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
