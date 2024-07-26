@@ -7,10 +7,15 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
+import { createInvoice } from '@/app/lib/actions';
 
 export default function Form({ customers }: { customers: CustomerField[] }) {
   return (
-    <form>
+    <form action={createInvoice}>
+      {/* form에 action 속성추가 */}
+      {/* html에서는 action 속성에 URL을 전달한다. 이 URL은 양식 데이터를 제출해야 하는 대상(일반적으로 API 엔드포인트)이 된다.
+      React에서는 이 action속성이 특별한 prop으로 간주되며 이 속성을 기반으로 작업을 호출할 수 있다.
+      백단에서 서버 액션은 POSTAPI 엔드포인트를 생성한다. 서버액션을 사용할 때 API 엔드포인트를 수동으로 생성할 필요가 없다. */}
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">

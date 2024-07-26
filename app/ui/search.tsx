@@ -6,7 +6,7 @@ import { useDebouncedCallback } from 'use-debounce';
 
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
-// 훅 가져오기
+// Next.js APIs 훅 가져오기
 
 /**
  * the useSearchParams() hook vs. the searchParams prop?
