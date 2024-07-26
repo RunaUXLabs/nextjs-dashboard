@@ -4,6 +4,12 @@ import InvoiceStatus from '@/app/ui/invoices/status';
 import { formatDateToLocal, formatCurrency } from '@/app/lib/utils';
 import { fetchFilteredInvoices } from '@/app/lib/data';
 
+/**
+ * the useSearchParams() hook vs. the searchParams prop?
+ * 언제 훅을 사용하고 언제 프롭을 사용해야할까?
+ *  - <Search>클라이언트 구성 요소이므로 useSearchParams()클라이언트에서 매개변수에 액세스하기 위해 훅 사용
+ *  - <Table>는 자체 데이터를 가져오는 서버 구성 요소이므로 searchParams페이지에서 구성 요소로 prop을 전달
+ */
 export default async function InvoicesTable({
   query,
   currentPage,
@@ -12,6 +18,7 @@ export default async function InvoicesTable({
   currentPage: number;
 }) {
   const invoices = await fetchFilteredInvoices(query, currentPage);
+  // 송장 데이터를 받아와서 전달받은 props를 인자로 넣어 매칭되는 송장을 찾아 리턴하여 변수에 할당
 
   return (
     <div className="mt-6 flow-root">
