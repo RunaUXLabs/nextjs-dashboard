@@ -6,6 +6,8 @@ import Breadcrumbs from '@/app/ui/invoices/breadcrumbs';
 // 송장데이터 가져오기
 import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
 // 특정 송장데이터 가져오기
+import { notFound } from 'next/navigation';
+// 404 가져오기
 
 export default async function Page({ params }: { params: { id: string } }) {
   // 송장의 데이터를 덮어씌울 템플릿이 될 거라서 양식을 미리 채워놓아야 함
@@ -14,6 +16,9 @@ export default async function Page({ params }: { params: { id: string } }) {
     fetchInvoiceById(id), //id를 인자로 넣어 찾은 지정된 송장 정보
     fetchCustomers(),
   ]); // Promise.all()을 사용하여 송장과 고객정보를 병렬로 가져와 구조분해 할당
+
+  if (!invoice) notFound(); // 송장이 없으면 404 실행
+
   return (
     <main>
       <Breadcrumbs

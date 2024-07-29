@@ -48,11 +48,16 @@ export async function createInvoice(formData: FormData) {
   const amountInCents = amount * 100; // 센트단위 저장공식 적용
   const date = new Date().toISOString().split('T')[0]; // 송장 생성 날짜에 대해 "YYYY-MM-DD" 형식으로 지정
 
-  await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-  `;
-  // SQL 쿼리를 만들어 새 송장을 데이터베이스에 삽입하고 변수를 전달
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Create Invoice.',
+    };
+  } // try/catch문으로 SQL 쿼리를 만들어 새 송장을 데이터베이스에 삽입하고 변수를 전달
 
   revalidatePath('/dashboard/invoices');
   // 데이터베이스가 업데이트되면 경로 /dashboard/invoices가 다시 검증되고 서버에서 최신 데이터를 가져옴
@@ -80,11 +85,15 @@ export async function updateInvoice(id: string, formData: FormData) {
 
   const amountInCents = amount * 100;
 
-  await sql`
-    UPDATE invoices
-    SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-    WHERE id = ${id}
-  `;
+  try {
+    await sql`
+        UPDATE invoices
+        SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+        WHERE id = ${id}
+      `;
+  } catch (error) {
+    return { message: 'Database Error: Failed to Update Invoice.' };
+  } // try/catch문으로 기존 송장에서 변경되는 정보를 전달
 
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
@@ -92,6 +101,13 @@ export async function updateInvoice(id: string, formData: FormData) {
 
 // 인보이스 삭제
 export async function deleteInvoice(id: string) {
-  await sql`DELETE FROM invoices WHERE id = ${id}`;
-  revalidatePath('/dashboard/invoices');
+  throw new Error('Failed to Delete Invoice'); // 에러 일부러 던지고 메시지 확인
+
+  try {
+    await sql`DELETE FROM invoices WHERE id = ${id}`;
+    revalidatePath('/dashboard/invoices');
+    return { message: 'Deleted Invoice.' };
+  } catch (error) {
+    return { message: 'Database Error: Failed to Delete Invoice.' };
+  }// try/catch문으로 SQL 쿼리로 데이터베이스 삭제 후, /dashboard/invoices가 다시 검증하고 서버에서 최신 데이터를 가져옴
 }
