@@ -7,11 +7,20 @@ import { z } from 'zod';
 // 폼 객체의 모양과 일치하는 스키마 FormSchema 정의
 const FormSchema = z.object({
   id: z.string(),
-  customerId: z.string(),
-  amount: z.coerce.number(),
-  status: z.enum(['pending', 'paid']),
+  // customerId: z.string(), //  customer 필드가 비어 있으면 type을 예상하기 때문에 오류를 발생
+  customerId: z.string({
+    invalid_type_error: 'Please select a customer.',
+  }),
+  // amount: z.coerce.number(), // amount 유형을 string에서 number로 강제 변환하기 때문에, 비어 있으면 기본값이 0, 0보다 큰 amount를 입력하게끔 유도
+  amount: z.coerce
+    .number()
+    .gt(0, { message: 'Please enter an amount greater than $0.' }),
+  // status: z.enum(['pending', 'paid']), // status 필드는 "보류 중" 또는 "지불됨"이란 값을 예상하는데, 비어 있으면 오류발생
+  status: z.enum(['pending', 'paid'], {
+    invalid_type_error: 'Please select an invoice status.',
+  }),
   date: z.string(),
-});
+}); // Zod를 사용하여 폼 데이터 세밀하게 경고문구 추가하여 검증체크 보완
 
 // 인보이스 생성
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
@@ -25,7 +34,18 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 // 데이터가 업데이트 되면 송장 페이지로 리디렉션하기 위해 훅 가져오기
 
-export async function createInvoice(formData: FormData) {
+
+export type State = {
+  errors?: {
+    customerId?: string[];
+    amount?: string[];
+    status?: string[];
+  };
+  message?: string | null;
+};
+// createInvoice()에 파라미터 2개 허용되도록 설정, prevState: 후크에서 전달된 상태 포함, formData: 폼에서 넘어오는 데이터
+// 해당 예제에선 useActionState 훅을 쓰고 있지 않지만, 필수 prop이니 알아둘 것
+export async function createInvoice(prevState: State, formData: FormData) {
   // FormData에서 .get(name)을 활용하여 정보를 추출한다.
   // 필드가 많은 양식일 경우엔 FormData의 entries()와 바닐라의 Object.fromEntries()를 활용한다.
   // 예시) const rawFormData = Object.fromEntries(formData.entries())
@@ -40,14 +60,29 @@ export async function createInvoice(formData: FormData) {
   // console.log(rawFormData);
 
   // 구조분해할당하여 추출법
-  const { customerId, amount, status } = CreateInvoice.parse({
+  // const { customerId, amount, status } = CreateInvoice.parse({
+  const validatedFields = CreateInvoice.safeParse({
+    // parse()를 safeParse()로 업그레이드, success/error 중 하나를 포함하는 객체를 반환함.
+    // try/catch block 내부 검증문을 넣지 않고도 유효성 검사를 보다 우아하게 처리 가능
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+  // 유효성 검사에 실패하면 오류를 조기에 반환
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Invoice.',
+    };
+  }
+  const { customerId, amount, status } = validatedFields.data;
+  // 위의 구조분해할당 추출을 validatedFields 반환값의 data키에서 진행
+
   const amountInCents = amount * 100; // 센트단위 저장공식 적용
   const date = new Date().toISOString().split('T')[0]; // 송장 생성 날짜에 대해 "YYYY-MM-DD" 형식으로 지정
 
+
+  // try/catch문으로 SQL 쿼리를 만들어 새 송장을 데이터베이스에 삽입하고 변수를 전달
   try {
     await sql`
       INSERT INTO invoices (customer_id, amount, status, date)
@@ -57,7 +92,7 @@ export async function createInvoice(formData: FormData) {
     return {
       message: 'Database Error: Failed to Create Invoice.',
     };
-  } // try/catch문으로 SQL 쿼리를 만들어 새 송장을 데이터베이스에 삽입하고 변수를 전달
+  }
 
   revalidatePath('/dashboard/invoices');
   // 데이터베이스가 업데이트되면 경로 /dashboard/invoices가 다시 검증되고 서버에서 최신 데이터를 가져옴
@@ -76,21 +111,34 @@ export async function createInvoice(formData: FormData) {
  */
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 
-export async function updateInvoice(id: string, formData: FormData) {
-  const { customerId, amount, status } = UpdateInvoice.parse({
+// lint 접근성 검증 추가한 인보이스 업데이트
+export async function updateInvoice(
+  id: string,
+  prevState: State,
+  formData: FormData,
+) {
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
 
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
 
   try {
     await sql`
-        UPDATE invoices
-        SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-        WHERE id = ${id}
-      `;
+      UPDATE invoices
+      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+      WHERE id = ${id}
+    `;
   } catch (error) {
     return { message: 'Database Error: Failed to Update Invoice.' };
   } // try/catch문으로 기존 송장에서 변경되는 정보를 전달
@@ -98,6 +146,7 @@ export async function updateInvoice(id: string, formData: FormData) {
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
 }
+
 
 // 인보이스 삭제
 export async function deleteInvoice(id: string) {
@@ -111,3 +160,4 @@ export async function deleteInvoice(id: string) {
     return { message: 'Database Error: Failed to Delete Invoice.' };
   }// try/catch문으로 SQL 쿼리로 데이터베이스 삭제 후, /dashboard/invoices가 다시 검증하고 서버에서 최신 데이터를 가져옴
 }
+

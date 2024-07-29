@@ -9,7 +9,11 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { Button } from '@/app/ui/button';
-import { updateInvoice } from '@/app/lib/actions';
+
+// import { updateInvoice } from '@/app/lib/actions';
+import { updateInvoice, State } from '@/app/lib/actions';
+import { useActionState } from 'react';
+// 14챕터, lint 검증을 위해 훅 추가
 
 export default function EditInvoiceForm({
   invoice,
@@ -18,10 +22,15 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
+  const initialState: State = { message: null, errors: {} }; // 타입설정
   const updateInvoiceWithId = updateInvoice.bind(null, invoice.id);
+  const [state, formAction] = useActionState(updateInvoiceWithId, initialState);  // 상태값 기반 useActionState 반영
   return (
+    // <form action={updateInvoiceWithId}>
     // <form action={updateInvoice(id)}> // id를 직접 함수의 인자에 넣어 prop으로 전달 할 수 없다, 함수처리 한 반환값을 전달한다. 
-    <form action={updateInvoiceWithId}>
+
+    // 14챕터, lint 검증을 위한 형식으로 업그레이드
+    <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
