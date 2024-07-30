@@ -1,4 +1,6 @@
 'use client';
+// 서버측 검증을 할 때 클라이언트 구성 요소로 전환, 클라이언트 측 검증시 필수값이 빈값으로 넘어가면 에러남. 서버측 검증으로 전환하는것을 추천.
+
 import { createInvoice, State } from '@/app/lib/actions';
 import { useActionState } from 'react';
 // 서버측 양식 검증을 위한 훅 가져오기
