@@ -7,12 +7,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@heroicons/react": "^2.1.4",
+    "@heroicons/react": "^2.1.5",
     "@tailwindcss/forms": "^0.5.7",
     "@vercel/postgres": "^0.8.0",
     "autoprefixer": "10.4.19",
     "bcrypt": "^5.1.1",
     "clsx": "^2.1.1",
+    "lint": "^0.8.19",
     "next": "15.0.0-canary.56",
     "next-auth": "5.0.0-beta.19",
     "postcss": "8.4.38",
@@ -20,7 +21,7 @@
     "react-dom": "19.0.0-rc-f38c22b244-20240704",
     "tailwindcss": "3.4.4",
     "typescript": "5.5.2",
-    "use-debounce": "^10.0.1",
+    "use-debounce": "^10.0.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -28,7 +29,7 @@
     "@types/node": "20.14.8",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
-    "eslint": "^8",
+    "eslint": "^8.57.0",
     "eslint-config-next": "14.2.5"
   },
   "engines": {
