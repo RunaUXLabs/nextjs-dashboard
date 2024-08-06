@@ -1,6 +1,10 @@
 'use server';
 // 해당 파일 내의 모든 함수를 서버작업으로 표시
 
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
+// 인증 로직을 로그인 폼과 연결하기 위해 함수가져오기
+
 import { z } from 'zod';
 // 양식 데이터를 데이터베이스로 보내기 전에 올바른 형식과 올바른 유형인지 확인해야 한다.
 // 이를 쉽게 도와주는 TypeScript-first validation library(유형검증라이브러리) zod를 활용하자
@@ -161,3 +165,23 @@ export async function deleteInvoice(id: string) {
   }// try/catch문으로 SQL 쿼리로 데이터베이스 삭제 후, /dashboard/invoices가 다시 검증하고 서버에서 최신 데이터를 가져옴
 }
 
+
+// 인증로직에 의해 오류처리하기
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}

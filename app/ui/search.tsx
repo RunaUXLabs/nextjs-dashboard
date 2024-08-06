@@ -1,5 +1,5 @@
 'use client';
-// 클라이언트 구성요소라고 선언. 이벤트 리스너와 훅을 사용할 수 있다.
+// 클라이언트 구성요소라고 선언. 서버작업의 이벤트 리스너와 훅을 불러와 사용할 수 있다.
 
 import { useDebouncedCallback } from 'use-debounce';
 // 디바운스 콜백함함수 가져오기
