@@ -35,3 +35,10 @@ export default async function Page({ params }: { params: { id: string } }) {
     </main>
   );
 }
+
+// 메타데이터로 웹페이지 타이틀 반영
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Edit Invoice',
+};
